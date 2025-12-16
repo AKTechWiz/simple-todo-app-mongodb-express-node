@@ -4,7 +4,7 @@ pipeline {
     environment {
         // DockerHub credentials - configure these in Jenkins credentials
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        DOCKERHUB_USERNAME = 'YOUR_DOCKERHUB_USERNAME'
+        DOCKERHUB_USERNAME = 'barzakh'
         IMAGE_NAME = 'todo-app'
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
