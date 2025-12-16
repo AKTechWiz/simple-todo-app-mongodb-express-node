@@ -139,7 +139,13 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            sh 'docker system prune -f'
+            script {
+                try {
+                    sh 'docker system prune -f'
+                } catch (Exception e) {
+                    echo "Docker cleanup skipped: ${e.message}"
+                }
+            }
         }
         success {
             echo 'Pipeline executed successfully!'
