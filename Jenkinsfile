@@ -23,8 +23,10 @@ pipeline {
             steps {
                 echo 'Building Docker image...'
                 script {
-                    dockerImage = docker.build("${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}")
-                    docker.build("${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest")
+                    sh """
+                        docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} .
+                        docker tag ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+                    """
                 }
                 echo 'Docker image built successfully!'
             }
@@ -34,13 +36,12 @@ pipeline {
             steps {
                 echo 'Testing Docker image...'
                 script {
-                    // Basic test to ensure image runs
-                    sh '''
-                        docker run -d --name test-container ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+                    sh """
+                        docker run -d --name test-container-${BUILD_NUMBER} ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
                         sleep 10
-                        docker stop test-container
-                        docker rm test-container
-                    '''
+                        docker stop test-container-${BUILD_NUMBER} || true
+                        docker rm test-container-${BUILD_NUMBER} || true
+                    """
                 }
                 echo 'Docker image tested successfully!'
             }
@@ -50,10 +51,12 @@ pipeline {
             steps {
                 echo 'Pushing Docker image to DockerHub...'
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        dockerImage.push("${IMAGE_TAG}")
-                        dockerImage.push('latest')
-                    }
+                    sh """
+                        echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin
+                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+                        docker logout
+                    """
                 }
                 echo 'Docker image pushed to DockerHub successfully!'
             }
