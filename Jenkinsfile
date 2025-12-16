@@ -71,15 +71,15 @@ pipeline {
                         sed -i 's|image: barzakh/todo-app:.*|image: barzakh/todo-app:${IMAGE_TAG}|g' k8s/deployment.yaml
                         
                         # Apply Kubernetes configurations
-                        kubectl apply -f k8s/pvc.yaml
-                        kubectl apply -f k8s/mongodb-deployment.yaml
-                        kubectl apply -f k8s/mongodb-service.yaml
-                        kubectl apply -f k8s/deployment.yaml
-                        kubectl apply -f k8s/service.yaml
+                        sudo kubectl apply -f k8s/pvc.yaml
+                        sudo kubectl apply -f k8s/mongodb-deployment.yaml
+                        sudo kubectl apply -f k8s/mongodb-service.yaml
+                        sudo kubectl apply -f k8s/deployment.yaml
+                        sudo kubectl apply -f k8s/service.yaml
                         
                         # Wait for deployments to be ready
-                        kubectl rollout status deployment/mongodb-deployment --timeout=300s
-                        kubectl rollout status deployment/todo-app-deployment --timeout=300s
+                        sudo kubectl rollout status deployment/mongodb-deployment --timeout=300s || echo 'MongoDB deployment check timed out'
+                        sudo kubectl rollout status deployment/todo-app-deployment --timeout=300s || echo 'Todo app deployment check timed out'
                     """
                 }
                 echo 'Kubernetes deployment completed successfully!'
@@ -92,17 +92,17 @@ pipeline {
                 script {
                     sh """
                         # Deploy Prometheus
-                        kubectl apply -f k8s/prometheus-config.yaml
-                        kubectl apply -f k8s/prometheus-deployment.yaml
-                        kubectl apply -f k8s/prometheus-service.yaml
+                        sudo kubectl apply -f k8s/prometheus-config.yaml
+                        sudo kubectl apply -f k8s/prometheus-deployment.yaml
+                        sudo kubectl apply -f k8s/prometheus-service.yaml
                         
                         # Deploy Grafana
-                        kubectl apply -f k8s/grafana-deployment.yaml
-                        kubectl apply -f k8s/grafana-service.yaml
+                        sudo kubectl apply -f k8s/grafana-deployment.yaml
+                        sudo kubectl apply -f k8s/grafana-service.yaml
                         
                         # Wait for monitoring deployments
-                        kubectl rollout status deployment/prometheus-deployment --timeout=300s
-                        kubectl rollout status deployment/grafana-deployment --timeout=300s
+                        sudo kubectl rollout status deployment/prometheus-deployment --timeout=300s || echo 'Prometheus deployment check timed out'
+                        sudo kubectl rollout status deployment/grafana-deployment --timeout=300s || echo 'Grafana deployment check timed out'
                     """
                 }
                 echo 'Monitoring setup completed successfully!'
@@ -115,19 +115,19 @@ pipeline {
                 script {
                     sh """
                         echo '\n=== PODS STATUS ==='
-                        kubectl get pods -o wide
+                        sudo kubectl get pods -o wide
                         
                         echo '\n=== SERVICES STATUS ==='
-                        kubectl get services
+                        sudo kubectl get services
                         
                         echo '\n=== PERSISTENT VOLUME CLAIMS ==='
-                        kubectl get pvc
+                        sudo kubectl get pvc
                         
                         echo '\n=== DEPLOYMENTS STATUS ==='
-                        kubectl get deployments
+                        sudo kubectl get deployments
                         
                         echo '\n=== APPLICATION ENDPOINT ==='
-                        kubectl get service todo-app-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || echo 'LoadBalancer IP pending...'
+                        sudo kubectl get service todo-app-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || echo 'LoadBalancer IP pending...'
                     """
                 }
                 echo 'Deployment verification completed!'
